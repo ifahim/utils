@@ -3,6 +3,9 @@ import cv2
 from sklearn.preprocessing import binarize
 
 def get_img_shape(path):
+    """
+    Returns HEIGHT, WIDTH, CHANNELS 
+    """
     img = cv2.imread(path)
     try:
         return img.shape
