@@ -140,14 +140,16 @@ def place_image_over_other_image(img1, img2, x1, y1, x2, y2):
     img1_bg = cv2.bitwise_and(roi,roi,mask = mask_inv)
     # Take only region of logo from logo image.
     img2_fg = cv2.bitwise_and(img2,img2,mask = mask)
-    img2_fg = cv2.GaussianBlur(img2_fg,(5,5),0)
+    #img2_fg = cv2.GaussianBlur(img2_fg,(5,5),0)
     dst = cv2.add(img1_bg,img2_fg)
-    img1[y1:y2, x1:x2 ] = dst
+    img1[y1:y2, x1:x2] = dst
+    #Add blur effect
+    blur_area = img1[y1 - 3:y2 + 3, x1 - 3:x2 + 3]
+    blurred_img = cv2.GaussianBlur(blur_area, (3, 3), 0)
+    img1[y1 - 3:y2 + 3, x1 - 3:x2 + 3] = blurred_img
     return img1
 
-
-
-def get_random_centers(seed_center, crop_height, crop_width, num_tries = 100, max_separation = 2500):
+def get_random_centers(seed_center, crop_height, crop_width, num_tries = 100000):
     """
     Get random centers around a center
     num_tries : how many tries to perform to get the points 
@@ -165,12 +167,21 @@ def get_random_centers(seed_center, crop_height, crop_width, num_tries = 100, ma
     while (i < num_tries):
         i += 1
         flag = True
-        new_center = (np.random.randint(0 + crop_height, HEIGHT), np.random.randint(0 + crop_width, WIDTH))
+        new_center = (np.random.randint(0 + 5 * crop_height, HEIGHT - 5* crop_height), np.random.randint(0 + 5 * crop_width, WIDTH - 5* crop_width))
         for acenter in centers_list:
             d = distance(new_center, acenter)
-            if ((d < min_distance) or (d > max_separation)):
+            if (d < min_distance):
                 flag = False 
                 break
         if flag == True:
             centers_list.append(new_center)
     return centers_list
+
+
+
+def draw_contour_on_an_image(img):
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(img_gray, 50, 255,0)
+    contours, _= cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    out = cv2.drawContours(img, contours, -1, (255,0,0), 1 )
+    return out
